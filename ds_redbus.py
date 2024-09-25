@@ -14,16 +14,33 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 driver.get(website)
 time.sleep(4)
 #APSRTC = driver.find_element(By.XPATH,"//div[@class='rtcName']")
-APSRTC=driver.find_element(By.CLASS_NAME, 'rtcName')
+#APSRTC=driver.find_element(By.CLASS_NAME, 'rtcName')
 APSRTC_elements = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'rtcName')))
 data=[]
+length=len(APSRTC_elements)
+print(length)
 for element in APSRTC_elements:
     data.append(element.text)
+    #element.click()
+    #driver.get(website)
+    #driver.back()
+    #time.sleep(4)
+
 df = pd.DataFrame(data, columns=['RTC Name'])
 print(df)
+for i in data:
+    print(i)
+    elements = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, f'//div[@class="rtcName" and text()="{i}"]')))
+    print(elements)
+    time.sleep(4)
+    elements.click()
+    driver.back()
+    #elements = driver.find_element(By.XPATH,'//div[@class="rtcName" and text()="{i}"]')
+    #elements = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="rtcName" and text()= "{i}"]')))
+    #elements.click()
 #element = driver.find_element(By.NAME, 'APSRTC')
-APSRTC.click()
-route_1=driver.find_element(By.XPATH,"//a[@href='/bus-tickets/hyderabad-to-vijayawada']")
+#APSRTC.click()
+#route_1=driver.find_element(By.XPATH,"//a[@href='/bus-tickets/hyderabad-to-vijayawada']")
 
-route_1.click()
+#route_1.click()
 
