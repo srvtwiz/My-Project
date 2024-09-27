@@ -18,25 +18,36 @@ time.sleep(4)
 #APSRTC=driver.find_element(By.CLASS_NAME, 'rtcName')
 APSRTC_elements = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'rtcName')))
 data=[]
+
 for element in APSRTC_elements:
     data.append(element.text)
     #element.click()
     #driver.get(website)
     #driver.back()
     #time.sleep(4)
+    
 
 df = pd.DataFrame(data, columns=['RTC Name'])
+
+
+# view_all=driver.find_element(By.XPATH,'//*[@id="homeV2-root"]/div[3]/div[1]/div[2]/a')
+# view_all.click()
 print(df)
+# elements = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, f'//div[@class="rtcName" and text()="TSRTC"]')))
+# elements.click()
 for i in data:
-    print(i)
     elements = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, f'//div[@class="rtcName" and text()="{i}"]')))
-    print(elements)
-    body = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="Carousel"]')))
-    body.click()
-    body.send_keys(Keys.ARROW_RIGHT)
-    time.sleep(4)
+    time.sleep(2)
     elements.click()
     driver.back()
+    print(i)
+    
+    
+    # if count>=2:
+    #     arrow_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "sc-frDJqD")))
+    #     arrow_button.click()
+
+
     #elements = driver.find_element(By.XPATH,'//div[@class="rtcName" and text()="{i}"]')
     #elements = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//div[@class="rtcName" and text()= "{i}"]')))
     #elements.click()
