@@ -1,82 +1,47 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-import pandas as pd
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 
-website='https://www.redbus.in'
+driver = webdriver.Chrome()
+wait = WebDriverWait(driver, 30) 
 options = webdriver.ChromeOptions()
 options.add_experimental_option("detach",True)
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+website="https://www.redbus.in/bus-tickets/hyderabad-to-vijayawada?fromCityId=124&toCityId=134&fromCityName=Hyderabad&toCityName=Vijayawada&busType=Any&srcCountry=IND&destCountry=IND&onward=29-Sep-2024"
 driver.get(website)
-wait = WebDriverWait(driver, 10)
+time.sleep(10)
+bus_data = ({})
+bus_page_container=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'result-sec')))
+bus_details_container=bus_page_container.find_elements(By.CLASS_NAME,'clearfix bus-item-details')
+for bus in bus_details_container:
+    try:
+          # Extract the bus name
+        bus_name = bus.find_element(By.CLASS_NAME, 'travels').text
 
+        # Extract departure time
+        departure_time = bus.find_element(By.CLASS_NAME, 'dp-time').text
 
-page = 1
-all_route = []
-route_name=[]
-route_link=[]
-while True:
-    print(f"Processing page {page}")
+        # Extract the rating
+        rating = bus.find_element(By.CLASS_NAME, 'rating').text
 
-    # Re-acquire the nested div after navigating to the next page
-    nested_div = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="Carousel"]')))
+        # Extract the journey duration
+        duration = bus.find_element(By.CLASS_NAME, 'dur').text
 
-    # Find route links on the current page and collect them
-    route_links = nested_div.find_elements(By.CSS_SELECTOR, 'div.rtcBack')
+        # Extract the fare
+        fare = bus.find_element(By.CLASS_NAME, 'fare').text
 
-    all_route.extend(route_links)
+        # Extract available seats
+        available_seats = bus.find_element(By.CLASS_NAME, 'seat-left').text
 
-    break
-
-
-for route in all_route:
-    link = route.find_element(By.TAG_NAME, 'a')
-    route_name = link.get_attribute('title')
-    #route_link = link.get_attribute('href')
-    print(route_name)
-
-driver.quit()
-
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# import time
-
-# # Initialize the Chrome driver
-# driver = webdriver.Chrome()
-
-# # Open the RedBus website
-# driver.get("https://www.redbus.in/online-booking/ksrtc-kerala/?utm_source=rtchometile")
-
-# wait = WebDriverWait(driver, 10)
-
-# # Wait until the nested div is present
-# nested_div = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.D117_main.D117_container')))
-
-# page = 1
-# all_route = []
-
-# while True:
-#     print(f"Processing page {page}")
-
-#     # Re-acquire the nested div after navigating to the next page
-#     nested_div = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.D117_main.D117_container')))
-
-#     # Find route links on the current page and collect them
-#     route_links = nested_div.find_elements(By.CSS_SELECTOR, 'div.route_link')
-
-#     all_route.extend(route_links)
-
-#     break
-
-# for route in all_route:
-#     link = route.find_element(By.TAG_NAME, 'a')
-#     route_name = link.get_attribute('title')
-#     route_link = link.get_attribute('href')
-#     print(route_name,route_link)
+        bus_data.append({'bus_name': bus_name,'departure_time': departure_time,'rating': rating,'duration': duration,'fare': fare,'available_seats': available_seats})
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        continue
+for entry in bus_data:
+    print(entry)
