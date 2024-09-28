@@ -21,12 +21,13 @@ data=[]
 
 for element in APSRTC_elements:
     data.append(element.text)
-    test=element.find_element(By.CLASS_NAME, 'rtcName')
-    test.click()
+    
+    element.click()
     driver.back()
     #time.sleep(4)
     print(data)
     
+
 
 # df = pd.DataFrame(data, columns=['RTC Name'])
 

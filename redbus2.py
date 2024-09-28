@@ -41,10 +41,18 @@ while True:
             route_name = link.get_attribute('title')
             route_link = link.get_attribute('href')
             print(route_name,route_link)
-        next_button1 = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "div.DC_117_pageTabs ")))
-        next_button = wait.until(EC.element_to_be_clickable(By.CLASS_NAME, "DC_117_pageTabs "))
-        for i in next_button1:
-            i.click()
+            page_tabs = driver.find_elements(By.CLASS_NAME, "DC_117_pageTabs ")
+        for i in range(len(page_tabs)):
+            if i > 0:
+                page_tabs = driver.find_elements(By.CLASS_NAME, "DC_117_pageTabs ")[i]
+                driver.execute_script("arguments[0].click();", page_tabs)
+                time.sleep(4)
+    
+        
+        
+        
+
+        
         # while True:
         #     try:
         #         # Check if the Next button is clickable
@@ -67,6 +75,14 @@ while True:
     except (NoSuchElementException, TimeoutException):
         print("No more pages to navigate.")
         break
+
+page_tabs = driver.find_elements(By.CLASS_NAME, "DC_117_pageTabs ")
+for i in range(len(page_tabs)):
+    if i > 0:
+        page_tabs = driver.find_elements(By.CLASS_NAME, "DC_117_pageTabs ")[i]
+        driver.execute_script("arguments[0].click();", page_tabs)
+        time.sleep(4)
+    
 driver.quit()
 
 # while True:

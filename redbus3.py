@@ -7,70 +7,69 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 
 driver = webdriver.Chrome()
-wait = WebDriverWait(driver, 30)  # Increased timeout
+wait = WebDriverWait(driver, 30) 
 
-driver.get("https://www.redbus.in/online-booking/apsrtc/?utm_source=rtchometile")
+main_links=({'APSRTC':"https://www.redbus.in/online-booking/apsrtc/?utm_source=rtchometile",'KSRTC':"https://www.redbus.in/online-booking/ksrtc-kerala/?utm_source=rtchometile",
+            'TSRTC ':"https://www.redbus.in/online-booking/tsrtc/?utm_source=rtchometile",'KTCL':"https://www.redbus.in/online-booking/ktcl/?utm_source=rtchometile",
+            'RSRTC':"https://www.redbus.in/online-booking/rsrtc/?utm_source=rtchometile",'SBSTC':"https://www.redbus.in/online-booking/south-bengal-state-transport-corporation-sbstc/?utm_source=rtchometile",
+            'HRTC':"https://www.redbus.in/online-booking/hrtc/?utm_source=rtchometile",'ASTC':"https://www.redbus.in/online-booking/astc/?utm_source=rtchometile",
+            'UPSRTC':"https://www.redbus.in/online-booking/uttar-pradesh-state-road-transport-corporation-upsrtc/?utm_source=rtchometile",'WBTC':"https://www.redbus.in/online-booking/wbtc-ctc/?utm_source=rtchometile"})
 
-#Define a list to store all the route data
-all_data = []
+for state,state_link in main_links.items():
+    driver.get(state_link)
+    print(state_link)
 
-def scrape_page():
-    # Locate elements  (container)
-    routescontainer = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "route_link")))
+    
+    route_data = []
 
-    # Loop through each route to extract details
-    for route in routescontainer:
-        try:
-            link = route.find_element(By.TAG_NAME, 'a')
-            routename= link.get_attribute('title')
-            routelink= link.get_attribute('href')
+    def scrape_route_page():
+       
+        routes_container = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "route_link")))
 
-            #Then  Append extracted data to list
-            all_data.append({'routename':routename,'routelink':routelink})
+        for route in routes_container:
+            try:
+                link = route.find_element(By.TAG_NAME, 'a')
+                route_name= link.get_attribute('title')
+                route_link= link.get_attribute('href')
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            continue
+                route_data.append({'route name':route_name,'route link':route_link})
 
-# Scrape data from the first 5 pages
-for page_number in range(1, 6):
-    scrape_page()
-    if page_number < 5:  # Don't try to click next on the last page
-        try:
-            # Locate the pagination container
-            pagination_container = wait.until(EC.presence_of_element_located(
-                (By.XPATH, '//*[@id="root"]/div/div[4]/div[12]')
-            ))
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                continue
 
-            # Locate the next page button within the container
-            next_page_button = pagination_container.find_element(
-                By.XPATH, f'.//div[contains(@class, "DC_117_pageTabs") and text()="{page_number + 1}"]'
-            )
+    for page_number in range(1, 10):
+        scrape_route_page()
+        if page_number < 5:  
+            try:
 
-            # Ensure the next page button is in view
-            actions = ActionChains(driver)
-            actions.move_to_element(next_page_button).perform()
-            time.sleep(1)  # Wait for a bit after scrolling
+                pagination_container = wait.until(EC.presence_of_element_located(
+                    (By.XPATH, '//*[@id="root"]/div/div[4]/div[12]')
+                ))
 
-            # Log the action
-            print(f"Clicking on page {page_number + 1}")
+                next_page_button = pagination_container.find_element(
+                    By.XPATH, f'.//div[contains(@class, "DC_117_pageTabs") and text()="{page_number + 1}"]'
+                )
 
-            # Click the next page button
-            next_page_button.click()
+                actions = ActionChains(driver)
+                actions.move_to_element(next_page_button).perform()
+                time.sleep(1) 
 
-            # Wait for the page number to update to the next page
-            wait.until(EC.text_to_be_present_in_element(
-                (By.XPATH, '//div[contains(@class, "DC_117_pageTabs DC_117_pageActive")]'), str(page_number + 1)))
+                print(f"Clicking on page {page_number + 1}")
 
-            # Log the successful page navigation
-            print(f"Successfully navigated to page {page_number + 1}")
+                next_page_button.click()
 
-            # Wait for a short duration to ensure the next page loads completely
-            time.sleep(3)
-        except Exception as e:
-            print(f"An error occurred while navigating to page {page_number + 1}: {e}")
-            break
 
-# Print the scraped data
-for entry in all_data:
-    print(entry)
+                wait.until(EC.text_to_be_present_in_element(
+                    (By.XPATH, '//div[contains(@class, "DC_117_pageTabs DC_117_pageActive")]'), str(page_number + 1)))
+
+                print(f"Successfully navigated to page {page_number + 1}")
+
+                time.sleep(3)
+            except Exception as e:
+                print(f"An error occurred while navigating to page {page_number + 1}: {e}")
+                break
+
+  
+    for entry in route_data:
+        print(entry)
