@@ -7,41 +7,91 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import time
+import pandas as pd
 
-driver = webdriver.Chrome()
-wait = WebDriverWait(driver, 30) 
 options = webdriver.ChromeOptions()
 options.add_experimental_option("detach",True)
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 website="https://www.redbus.in/bus-tickets/hyderabad-to-vijayawada?fromCityId=124&toCityId=134&fromCityName=Hyderabad&toCityName=Vijayawada&busType=Any&srcCountry=IND&destCountry=IND&onward=29-Sep-2024"
 driver.get(website)
 time.sleep(10)
-bus_data = ({})
-bus_page_container=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'result-sec')))
-bus_details_container=bus_page_container.find_elements(By.CLASS_NAME,'clearfix bus-item-details')
-for bus in bus_details_container:
-    try:
-          # Extract the bus name
-        bus_name = bus.find_element(By.CLASS_NAME, 'travels').text
+wait = WebDriverWait(driver, 30) 
 
-        # Extract departure time
-        departure_time = bus.find_element(By.CLASS_NAME, 'dp-time').text
+def scroll():
+    last_height = driver.execute_script("return document.body.scrollHeight")
 
-        # Extract the rating
-        rating = bus.find_element(By.CLASS_NAME, 'rating').text
+    while True:
 
-        # Extract the journey duration
-        duration = bus.find_element(By.CLASS_NAME, 'dur').text
+        # Scroll down to the bottom in order to load all the buses
 
-        # Extract the fare
-        fare = bus.find_element(By.CLASS_NAME, 'fare').text
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # Extract available seats
-        available_seats = bus.find_element(By.CLASS_NAME, 'seat-left').text
+        # Wait for page to load
 
-        bus_data.append({'bus_name': bus_name,'departure_time': departure_time,'rating': rating,'duration': duration,'fare': fare,'available_seats': available_seats})
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        continue
-for entry in bus_data:
+        time.sleep(.2)
+
+        # Calculate new scroll height and compare with last scroll height
+
+        new_height = driver.execute_script("return document.body.scrollHeight")
+
+        # If it is the same height then it is at the end of the page
+        if new_height == last_height:
+            break
+
+        last_height = new_height
+
+
+
+try:
+
+    view_buses_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "button")))
+    driver.execute_script("arguments[0].click();", view_buses_button)
+    time.sleep(5)  # Wait for buses to load
+    
+    # Scroll down to load all bus items
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(5)  # Wait for the page to load more content
+    # Wait for the bus results to be present
+    scroll()
+    bus_page_container = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'clearfix.row-one')))
+
+    # Extract individual bus details
+    bus_name = driver.find_elements(By.CLASS_NAME, 'travels.lh-24.f-bold.d-color')
+    bus_type_elements = driver.find_elements(By.CLASS_NAME, "bus-type.f-12.m-top-16.l-color.evBus")
+    departure_time = driver.find_elements(By.CLASS_NAME, 'dp-time.f-19.d-color.f-bold')
+    arival_time = driver.find_elements(By.CLASS_NAME, 'bp-time.f-19.d-color.disp-Inline')
+    rating = driver.find_elements(By.XPATH, "//div[@class='rating-sec lh-24']")
+    duration = driver.find_elements(By.CLASS_NAME, 'dur.l-color.lh-24')
+    fare = driver.find_elements(By.CLASS_NAME, 'fare.d-block span.f-bold.f-19')
+    available_seats =driver.find_elements(By.XPATH, "//div[contains(@class, 'seat-left m-top-30') or contains(@class, 'seat-left m-top-16')]")
+
+    bus_details = []
+
+    # Iterate through each bus element
+    for i in range(len(bus_page_container)):
+        bus_detail = {}
+
+        # Extract details and handle missing data
+        
+        bus_detail["Bus_Name"] = bus_name[i].text if i < len(bus_name) else "N/A"
+        bus_detail["Bus_Type"] = bus_type_elements[i].text if i < len(bus_type_elements) else "N/A"
+        bus_detail["Departing_Time"] = departure_time[i].text if i < len(departure_time) else "N/A"
+        bus_detail["Duration"] = duration[i].text if i < len(duration) else "N/A"
+        bus_detail["Reaching_Time"] = arival_time[i].text if i < len(arival_time) else "N/A"
+        bus_detail["Star_Rating"] = rating[i].text if i < len(rating) else "N/A"
+        bus_detail["Price"] = fare[i].text if i < len(fare) else "N/A"
+        bus_detail["Seat_Availability"] = available_seats[i].text if i < len(available_seats) else "N/A"
+
+        bus_details.append(bus_detail)
+        print(bus_detail)
+
+except Exception as e:
+    print(f"Error occurred: {e}")
+
+# Output the bus details
+for entry in bus_details:
     print(entry)
+
+df = pd.DataFrame(bus_details)
+
+df.to_csv('ap_bus_details.csv', index=False)
