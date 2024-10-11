@@ -13,6 +13,7 @@ options.add_experimental_option("detach", True)
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 wait = WebDriverWait(driver, 30)
 
+#for looping
 main_links = {
     'APSRTC': "https://www.redbus.in/online-booking/apsrtc/?utm_source=rtchometile",
     'KSRTC': "https://www.redbus.in/online-booking/ksrtc-kerala/?utm_source=rtchometile",
@@ -27,14 +28,14 @@ main_links = {
 }
 
 def scroll():
-    last_height = driver.execute_script("return document.body.scrollHeight")
+    last = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(0.2)
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
+        new= driver.execute_script("return document.body.scrollHeight")
+        if new == last:
             break
-        last_height = new_height
+        last = new
 
 def scrape_route_page():
     routes_container = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'route_link')))
@@ -48,16 +49,17 @@ def scrape_route_page():
             print(f"An error: {e}")
             continue
 
+#looping all the state links
 for state, state_link in main_links.items():
     driver.get(state_link)
     print(f"Processing state: {state} - {state_link}")
+    route_data = []  
+    bus_details = []  
 
-    route_data = []  # Clear route_data for each state
-    bus_details = []  # Clear bus_details for each state
-
-    # Scrape route pages for the current state
+#next page
     for page_number in range(1, 10):
         scrape_route_page()
+
         if page_number < 10:
             try:
                 pagination_container = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="root"]/div/div[4]/div[12]')))
@@ -67,20 +69,19 @@ for state, state_link in main_links.items():
                 actions.move_to_element(next_page_button).perform()
                 time.sleep(1)
                 next_page_button.click()
-
                 wait.until(EC.text_to_be_present_in_element((By.XPATH, '//div[contains(@class, "DC_117_pageTabs DC_117_pageActive")]'), str(page_number + 1)))
                 print(f"Current page {page_number + 1}")
                 time.sleep(3)
+
             except Exception as e:
                 print(f"An error in page {page_number + 1}: {e}")
                 break
 
-    # Now scrape buses for each route
+#loop for bus routes
     for route in route_data:
         route_name = route['route name']
         route_link = route['route link']
-        print(f"Processing route: {route_name}")
-
+        print(f"Processing {route_name}")
         driver.get(route_link)
         time.sleep(3)
 
@@ -88,8 +89,6 @@ for state, state_link in main_links.items():
             view_buses_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "button")))
             driver.execute_script("arguments[0].click();", view_buses_button)
             time.sleep(5)
-
-            # Scroll down to load all bus items
             scroll()
 
             bus_page_container = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'clearfix.row-one')))
@@ -102,11 +101,9 @@ for state, state_link in main_links.items():
             fare = driver.find_elements(By.CLASS_NAME, 'fare.d-block span.f-bold.f-19')
             available_seats = driver.find_elements(By.XPATH, "//div[contains(@class, 'seat-left m-top-30') or contains(@class, 'seat-left m-top-16')]")
 
-            total_buses = max(
-                len(bus_name), len(bus_type_elements), len(departure_time), len(arival_time),
-                len(rating), len(duration), len(fare), len(available_seats)
-            )
+            total_buses = max(len(bus_name), len(bus_type_elements), len(departure_time), len(arival_time),len(rating), len(duration), len(fare), len(available_seats))
 
+#loop for bus data
             for i in range(total_buses):
                 bus_detail = {
                     "route_name": route_name,
@@ -122,13 +119,12 @@ for state, state_link in main_links.items():
                 }
                 bus_details.append(bus_detail)
                 
-
         except Exception as e:
-            print(f"Error occurred for route {route_name}: {e}")
+            print(f"Error for route {route_name}: {e}")
 
-    # Save bus details for the current state to a CSV file
+#storing to csv
     df = pd.DataFrame(bus_details)
     df.to_csv(f'{state}_bus_details.csv', index=False)
-    print(f"Saved {state} bus details to CSV.")
+    print(f"Saved {state}")
 
 driver.quit()
