@@ -24,19 +24,14 @@ def scroll():
 
     while True:
 
-        # Scroll down to the bottom in order to load all the buses
 
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # Wait for page to load
-
         time.sleep(.2)
 
-        # Calculate new scroll height and compare with last scroll height
 
         new_height = driver.execute_script("return document.body.scrollHeight")
 
-        # If it is the same height then it is at the end of the page
         if new_height == last_height:
             break
 
@@ -101,16 +96,16 @@ for state,state_link in main_links.items():
 
             view_buses_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "button")))
             driver.execute_script("arguments[0].click();", view_buses_button)
-            time.sleep(5)  # Wait for buses to load
+            time.sleep(5) 
             
-            # Scroll down to load all bus items
+        
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(5)  # Wait for the page to load more content
-            # Wait for the bus results to be present
+            time.sleep(5)
+    
             scroll()
             bus_page_container = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'clearfix.row-one')))
 
-            # Extract individual bus details
+    
             bus_name = driver.find_elements(By.CLASS_NAME, 'travels.lh-24.f-bold.d-color')
             bus_type_elements = driver.find_elements(By.CLASS_NAME, "bus-type.f-12.m-top-16.l-color.evBus")
             departure_time = driver.find_elements(By.CLASS_NAME, 'dp-time.f-19.d-color.f-bold')
@@ -122,11 +117,10 @@ for state,state_link in main_links.items():
 
             bus_details = []
 
-            # Iterate through each bus element
             for i in range(len(bus_page_container)):
                 bus_detail = {}
 
-                # Extract details and handle missing data
+    
                 bus_detail["route_name"]=route_name
                 bus_detail["route_link"]=route_link
                 bus_detail["Bus_Name"] = bus_name[i].text if i < len(bus_name) else "N/A"

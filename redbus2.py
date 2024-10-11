@@ -19,22 +19,17 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 wait = WebDriverWait(driver, 10)
 
-
-# Initialize the Chrome driver
-
-
-# Open the RedBus website
 driver.get("https://www.redbus.in/online-booking/ksrtc-kerala/?utm_source=rtchometile")
 driver.maximize_window() 
 
-# Wait until the nested div is present
+
 nested_div = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.D117_main.D117_container')))
 
 page = 1
 
 while True:
     try:
-        # Find elements you want to scrape on the current page
+       
         route_links = nested_div.find_elements(By.CSS_SELECTOR, 'div.route_link')
         for route in route_links:
             link = route.find_element(By.TAG_NAME, 'a')
